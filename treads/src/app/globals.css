@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --radius: 0.75rem;
+}
+
+html, body {
+  height: 100%;
+}
+
+/* Subtle neon sheen */
+.neon-sheen {
+  position: relative;
+}
+.neon-sheen::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: radial-gradient(60% 60% at 50% 50%, rgba(0,229,255,0.15), transparent);
+  filter: blur(12px);
+  pointer-events: none;
+}
+
