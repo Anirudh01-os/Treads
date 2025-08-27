@@ -1,0 +1,231 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Enums ---
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ItemType {
+  TOP
+  BOTTOM
+  OUTERWEAR
+  SHOES
+  ACCESSORY
+}
+
+enum Season {
+  SPRING
+  SUMMER
+  FALL
+  WINTER
+  ALL_SEASONS
+}
+
+enum Occasion {
+  WORK
+  DATE
+  TRAVEL
+  FESTIVE
+  CASUAL
+  FORMAL
+}
+
+// --- Core Auth (NextAuth) ---
+model User {
+  id            String   @id @default(cuid())
+  name          String?
+  email         String?  @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role     @default(USER)
+
+  // Profile
+  profile       Profile?
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  items         Item[]
+  outfits       Outfit[]      @relation("OutfitOwner")
+  feedback      Feedback[]
+  events        WardrobeEvent[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- Profile & Preferences ---
+model Profile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  heightCm       Int?
+  weightKg       Int?
+  chestCm        Int?
+  waistCm        Int?
+  hipsCm         Int?
+  faceShape      String? // user-selected
+  skinUndertone  String? // cool/warm/neutral
+  hairType       String?
+  fitPreferences String? // json string or compact text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// --- Wardrobe ---
+model Item {
+  id           String    @id @default(cuid())
+  ownerId      String
+  title        String
+  description  String?   @db.Text
+  imageUrl     String
+  bgRemovedUrl String?
+  type         ItemType
+  colors       String[]  // hex or names
+  season       Season?
+  material     String?
+  brand        String?
+  vectorJson   Json?     // CLIP embedding fallback when pgvector not available
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  tags  ItemTag[]
+  outfitItems OutfitItem[]
+  feedbacks   Feedback[]
+  events      WardrobeEvent[]
+
+  @@index([ownerId])
+  @@index([type])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  items     ItemTag[]
+}
+
+model ItemTag {
+  itemId String
+  tagId  String
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, tagId])
+}
+
+// --- Outfits & Feedback ---
+model Outfit {
+  id          String       @id @default(cuid())
+  ownerId     String
+  title       String
+  description String?      @db.Text
+  occasion    Occasion?
+  imageUrl    String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  owner User @relation("OutfitOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  items OutfitItem[]
+  feedback Feedback[]
+  events   WardrobeEvent[]
+}
+
+model OutfitItem {
+  outfitId String
+  itemId   String
+  slot     String? // top/bottom/accessory position
+
+  outfit Outfit @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([outfitId, itemId])
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String
+  outfitId  String?
+  itemId    String?
+  value     Int      // -1 dislike, 1 like
+  comment   String?
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outfit Outfit? @relation(fields: [outfitId], references: [id])
+  item   Item?   @relation(fields: [itemId], references: [id])
+
+  @@index([userId])
+  @@index([outfitId])
+  @@index([itemId])
+}
+
+// --- Scheduling & Events ---
+model WardrobeEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  outfitId    String?
+  itemId      String?
+  date        DateTime
+  kind        String   // wear/iron/clean/alter
+  reminder    Boolean  @default(false)
+  notes       String?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outfit Outfit? @relation(fields: [outfitId], references: [id])
+  item   Item?   @relation(fields: [itemId], references: [id])
+
+  @@index([userId, date])
+}
