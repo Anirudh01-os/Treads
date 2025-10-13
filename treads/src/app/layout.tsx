@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Navbar } from '@/components/nav/Navbar'
+import Providers from '@/components/providers/Providers'
 
 export const metadata: Metadata = {
   title: 'TREADS – AI E‑Wardrobe',
@@ -12,7 +13,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="min-h-screen bg-beige-gradient text-foreground antialiased">
         <Navbar />
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   )

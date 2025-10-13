@@ -2,6 +2,8 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 function NeonGlow() {
   return (
@@ -41,6 +43,14 @@ export default function HomePage() {
           <OrbitControls enablePan={false} />
         </Canvas>
       </section>
+      <div className="col-span-1 lg:col-span-2 flex gap-3">
+        <Button asChild>
+          <Link href="/wardrobe">Open E‑Wardrobe</Link>
+        </Button>
+        <Button variant="outline" asChild>
+          <Link href="/stylist">Ask Stylist</Link>
+        </Button>
+      </div>
     </main>
   )
 }
