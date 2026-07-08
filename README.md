@@ -101,4 +101,4 @@ Once running, visit: http://localhost:8000/docs
 Please read our contributing guidelines before submitting pull requests.
 
 ## License
-MIT License - see LICENSE file for details.
+MIT License - see LICENSE file for details..
