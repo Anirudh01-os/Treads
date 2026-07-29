@@ -14,7 +14,12 @@ export function Navbar() {
           <Button variant="ghost" asChild>
             <Link href="/stylist">Stylist</Link>
           </Button>
-          <Button variant="neon">Sign in</Button>
+          <Button variant="ghost" asChild>
+            <Link href="/tryon">Try‑On</Link>
+          </Button>
+          <Button variant="neon" asChild>
+            <Link href="/create-profile">Create profile</Link>
+          </Button>
         </nav>
       </div>
     </header>
